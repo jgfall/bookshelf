@@ -9,7 +9,7 @@ import { NAME } from '@/utils/constant';
 import { persentase } from '@/utils/persentase';
 import { getBooksTable, getBookmarksTable } from '@/config/notion';
 
-export default function Home({ books, reading, finished, bookmarks }) {
+export default function Home({ books, reading, finished, bookmarks, hasError, errorMessage }) {
   const seeMore = finished.length - 3;
 
   return (
@@ -19,74 +19,105 @@ export default function Home({ books, reading, finished, bookmarks }) {
         <div className="space-y-3">
           <Image src="/static/images/me.png" width={100} height={100} alt={NAME} priority />
           <h1 className="text-gray-900 text-2xl font-bold">{NAME}</h1>
+          
+          {hasError && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm font-medium">
+                ⚠️ {errorMessage}
+              </p>
+              <p className="text-yellow-700 text-xs mt-1">
+                Please check your Notion configuration and ensure all environment variables are set correctly.
+              </p>
+            </div>
+          )}
+          
           <h2 className="text-gray-500">
             {books.length} Buku
             <span className="mx-1">&bull;</span>
             {reading.length} Sedang Dibaca
           </h2>
-          <section className="flex flex-wrap gap-2 pt-6 w-full lg:w-3/4">
-            {reading.map((book) => (
-              <a
-                key={book.id}
-                href={book.link}
-                className="px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 border border-gray-100 rounded-full"
-              >
-                {persentase(book)}
-                <span className="mx-0.5 text-gray-500">&bull;</span>
-                {book.name}
-              </a>
-            ))}
-          </section>
+          
+          {reading.length > 0 && (
+            <section className="flex flex-wrap gap-2 pt-6 w-full lg:w-3/4">
+              {reading.map((book) => (
+                <a
+                  key={book.id}
+                  href={book.link}
+                  className="px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 border border-gray-100 rounded-full"
+                >
+                  {persentase(book)}
+                  <span className="mx-0.5 text-gray-500">&bull;</span>
+                  {book.name}
+                </a>
+              ))}
+            </section>
+          )}
 
           <section className="py-6 space-y-1">
             <h1 className="text-2xl font-bold">Buku</h1>
             <h2 className="text-gray-600">Selesai Dibaca</h2>
-            <div className="grid gap-5 grid-cols-1 pt-6 md:grid-cols-3">
-              {finished.slice(0, 3).map((book) =>
-                book.notes ? (
-                  <LinkWrapper book={book} key={book.id}>
-                    <BookCard book={book} featured />
-                  </LinkWrapper>
-                ) : (
-                  <BookCard book={book} key={book.id} featured />
-                )
-              )}
-            </div>
-            <div className="grid gap-5 pt-4 md:grid-cols-4">
-              {finished.slice(4, 7).map((book) =>
-                book.notes ? (
-                  <LinkWrapper book={book} key={book.id} className="hidden md:block">
-                    <BookCard book={book} />
-                  </LinkWrapper>
-                ) : (
-                  <BookCard book={book} key={book.id} className="hidden md:block" />
-                )
-              )}
-              <section className="h-[7.7rem] flex flex-col items-center justify-center p-3 rounded-lg">
-                <h2 className="text-md font-semibold md:hidden">
-                  <strong className="fancy-link">+{seeMore}</strong> buku tersembunyi
-                </h2>
-                <h3 className="mb-2 py-1 text-center text-gray-500 text-base md:text-gray-800 md:text-sm">
-                  Ingin menampilkan lebih banyak?
-                </h3>
-                <Link href="/all">
-                  <a className="bg-groovy-purple/10 hover:bg-groovy-purple/20 focus:ring-groovy-violet/40 px-10 py-3 text-groovy-violet text-base font-medium rounded-md focus:outline-none transition duration-300 focus:ring md:px-4 md:py-1.5 md:text-sm">
-                    Lihat Semua
-                  </a>
-                </Link>
-              </section>
-            </div>
+            
+            {finished.length === 0 ? (
+              <div className="pt-6">
+                <p className="text-gray-500 text-center py-8">
+                  Belum ada buku yang selesai dibaca. Mulai membaca dan tambahkan ke koleksi! 📚
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-5 grid-cols-1 pt-6 md:grid-cols-3">
+                  {finished.slice(0, 3).map((book) =>
+                    book.notes ? (
+                      <LinkWrapper book={book} key={book.id}>
+                        <BookCard book={book} featured />
+                      </LinkWrapper>
+                    ) : (
+                      <BookCard book={book} key={book.id} featured />
+                    )
+                  )}
+                </div>
+                
+                {finished.length > 3 && (
+                  <div className="grid gap-5 pt-4 md:grid-cols-4">
+                    {finished.slice(4, 7).map((book) =>
+                      book.notes ? (
+                        <LinkWrapper book={book} key={book.id} className="hidden md:block">
+                          <BookCard book={book} />
+                        </LinkWrapper>
+                      ) : (
+                        <BookCard book={book} key={book.id} className="hidden md:block" />
+                      )
+                    )}
+                    <section className="h-[7.7rem] flex flex-col items-center justify-center p-3 rounded-lg">
+                      <h2 className="text-md font-semibold md:hidden">
+                        <strong className="fancy-link">+{seeMore > 0 ? seeMore : 0}</strong> buku tersembunyi
+                      </h2>
+                      <h3 className="mb-2 py-1 text-center text-gray-500 text-base md:text-gray-800 md:text-sm">
+                        Ingin menampilkan lebih banyak?
+                      </h3>
+                      <Link href="/all">
+                        <a className="bg-groovy-purple/10 hover:bg-groovy-purple/20 focus:ring-groovy-violet/40 px-10 py-3 text-groovy-violet text-base font-medium rounded-md focus:outline-none transition duration-300 focus:ring md:px-4 md:py-1.5 md:text-sm">
+                          Lihat Semua
+                        </a>
+                      </Link>
+                    </section>
+                  </div>
+                )}
+              </>
+            )}
           </section>
 
-          <section className="py-6 space-y-1">
-            <h1 className="mt-2 text-2xl font-bold">Bookmarks</h1>
-            <h2 className="text-gray-600">Yang cukup menarik untuk dibaca</h2>
-            <div className="pt-6">
-              {bookmarks.map((x) => (
-                <Bookmarks data={x} key={x.id} />
-              ))}
-            </div>
-          </section>
+          {bookmarks.length > 0 && (
+            <section className="py-6 space-y-1">
+              <h1 className="mt-2 text-2xl font-bold">Bookmarks</h1>
+              <h2 className="text-gray-600">Yang cukup menarik untuk dibaca</h2>
+              <div className="pt-6">
+                {bookmarks.map((x) => (
+                  <Bookmarks data={x} key={x.id} />
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </Container>
@@ -94,26 +125,96 @@ export default function Home({ books, reading, finished, bookmarks }) {
 }
 
 export async function getStaticProps() {
-  const booksTable = await getBooksTable();
-  const bookmarksTable = await getBookmarksTable();
+  let hasError = false;
+  let errorMessage = '';
 
-  const finished = booksTable
-    .filter(({ status }) => status == 'Finished')
-    .sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)));
-  const reading = booksTable
-    .filter(({ status }) => status == 'Reading')
-    .sort((a, b) => Number(new Date(b.last_updated)) - Number(new Date(a.last_updated)));
-  const bookmarks = bookmarksTable
-    .filter(({ published }) => published)
-    .sort((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)));
+  try {
+    console.log('🏠 Building home page...');
+    
+    // Fetch data with error handling
+    const booksTable = await getBooksTable();
+    const bookmarksTable = await getBookmarksTable();
 
-  return {
-    props: {
-      books: booksTable,
-      finished,
-      reading,
-      bookmarks
-    },
-    revalidate: 10
-  };
+    // Validate data types
+    if (!Array.isArray(booksTable)) {
+      console.error('❌ booksTable is not an array:', typeof booksTable);
+      hasError = true;
+      errorMessage = 'Unable to load books data. Using fallback data.';
+      
+      return {
+        props: {
+          books: [],
+          finished: [],
+          reading: [],
+          bookmarks: [],
+          hasError: true,
+          errorMessage
+        },
+        revalidate: 10
+      };
+    }
+
+    if (!Array.isArray(bookmarksTable)) {
+      console.warn('⚠️ bookmarksTable is not an array, defaulting to empty');
+    }
+
+    // Filter and sort books with validation
+    const finished = booksTable
+      .filter((book) => book && book.status === 'Finished')
+      .sort((a, b) => {
+        const dateA = a.date ? Number(new Date(a.date)) : 0;
+        const dateB = b.date ? Number(new Date(b.date)) : 0;
+        return dateB - dateA;
+      });
+
+    const reading = booksTable
+      .filter((book) => book && book.status === 'Reading')
+      .sort((a, b) => {
+        const dateA = a.last_updated ? Number(new Date(a.last_updated)) : 0;
+        const dateB = b.last_updated ? Number(new Date(b.last_updated)) : 0;
+        return dateB - dateA;
+      });
+
+    const bookmarks = Array.isArray(bookmarksTable)
+      ? bookmarksTable
+          .filter((bookmark) => bookmark && bookmark.published)
+          .sort((a, b) => {
+            const dateA = a.date ? Number(new Date(a.date)) : 0;
+            const dateB = b.date ? Number(new Date(b.date)) : 0;
+            return dateB - dateA;
+          })
+      : [];
+
+    console.log(`✅ Home page built successfully:`);
+    console.log(`   - Total books: ${booksTable.length}`);
+    console.log(`   - Finished: ${finished.length}`);
+    console.log(`   - Reading: ${reading.length}`);
+    console.log(`   - Bookmarks: ${bookmarks.length}`);
+
+    return {
+      props: {
+        books: booksTable,
+        finished,
+        reading,
+        bookmarks,
+        hasError: false,
+        errorMessage: ''
+      },
+      revalidate: 10
+    };
+  } catch (error) {
+    console.error('❌ Error in getStaticProps for home page:', error.message);
+    
+    return {
+      props: {
+        books: [],
+        finished: [],
+        reading: [],
+        bookmarks: [],
+        hasError: true,
+        errorMessage: 'Failed to load data from Notion. Please check your configuration.'
+      },
+      revalidate: 10
+    };
+  }
 }
